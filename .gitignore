@@ -87,3 +87,8 @@ Thumbs.db
 
 # Environment and sensitive configuration
 secret.*
+
+#requirements
+
+requirements.md
+audit.md
