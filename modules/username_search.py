@@ -43,14 +43,20 @@ def check_github(username: str) -> tuple:
         return ("GitHub", "Not Found", None)
 
 
+class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Custom HTTP handler to detect redirects to login or 404 pages."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
 def check_facebook(username: str) -> tuple:
     """Check Facebook presence."""
     url = f"https://www.facebook.com/{username}"
+    opener = urllib.request.build_opener(NoRedirectHandler)
     req = urllib.request.Request(url, headers=HEADERS)
     try:
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with opener.open(req, timeout=5) as resp:
             content = resp.read().decode('utf-8', errors='ignore')
-            if "Page Not Found" in content or "content is not available" in content.lower():
+            if "Page Not Found" in content or "content is not available" in content.lower() or "login" in resp.geturl():
                 return ("Facebook", "Not Found", None)
             return ("Facebook", "Found", None)
     except Exception:
@@ -59,13 +65,16 @@ def check_facebook(username: str) -> tuple:
 
 def check_twitter(username: str) -> tuple:
     """Check Twitter / X presence."""
-    url = f"https://x.com/{username}"
-    req = urllib.request.Request(url, headers=HEADERS)
+    url = f"https://api.github.com/users/{username}"  # Check GitHub first for reliable API verification
+    # For Twitter/X, check Nitter public frontend or direct web handle
+    url_tw = f"https://x.com/{username}"
+    req = urllib.request.Request(url_tw, headers=HEADERS)
     try:
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            return ("Twitter", "Found" if resp.status == 200 else "Not Found", None)
-    except urllib.error.HTTPError:
-        return ("Twitter", "Not Found", None)
+        opener = urllib.request.build_opener(NoRedirectHandler)
+        with opener.open(req, timeout=5) as resp:
+            if resp.status == 200 and "login" not in resp.geturl():
+                return ("Twitter", "Found", None)
+            return ("Twitter", "Not Found", None)
     except Exception:
         return ("Twitter", "Not Found", None)
 
@@ -73,11 +82,12 @@ def check_twitter(username: str) -> tuple:
 def check_linkedin(username: str) -> tuple:
     """Check LinkedIn presence."""
     url = f"https://www.linkedin.com/in/{username}"
+    opener = urllib.request.build_opener(NoRedirectHandler)
     req = urllib.request.Request(url, headers=HEADERS)
     try:
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with opener.open(req, timeout=5) as resp:
             content = resp.read().decode('utf-8', errors='ignore')
-            if "page-not-found" in content or "Profile Not Found" in content:
+            if "page-not-found" in content or "Profile Not Found" in content or "authwall" in resp.geturl():
                 return ("LinkedIn", "Not Found", None)
             return ("LinkedIn", "Found", None)
     except Exception:
@@ -87,15 +97,17 @@ def check_linkedin(username: str) -> tuple:
 def check_instagram(username: str) -> tuple:
     """Check Instagram presence."""
     url = f"https://www.instagram.com/{username}/"
+    opener = urllib.request.build_opener(NoRedirectHandler)
     req = urllib.request.Request(url, headers=HEADERS)
     try:
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with opener.open(req, timeout=5) as resp:
             content = resp.read().decode('utf-8', errors='ignore')
-            if "Page Not Found" in content or "Sorry, this page isn't available." in content:
+            if "Page Not Found" in content or "Sorry, this page isn't available." in content or "login" in resp.geturl():
                 return ("Instagram", "Not Found", None)
             return ("Instagram", "Found", None)
     except Exception:
         return ("Instagram", "Not Found", None)
+
 
 
 def search_by_username(username: str) -> str:
