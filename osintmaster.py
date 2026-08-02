@@ -38,7 +38,13 @@ def main():
 
     args = parser.parse_args()
 
+    if not (args.name or args.ip or args.username or args.domain):
+        print("Error: Please specify at least one search option (-n, -i, -u, or -d).")
+        parser.print_help()
+        sys.exit(1)
+
     results = []
+
 
     if args.name:
         res = search_by_name(args.name)
