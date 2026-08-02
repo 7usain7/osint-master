@@ -97,13 +97,14 @@ def get_ssl_info(hostname: str) -> str:
 
 
 def get_cname(hostname: str) -> str:
-    """Query CNAME record for hostname."""
+    """Query CNAME record for hostname safely across OS platforms."""
     try:
         res = subprocess.run(['host', '-t', 'CNAME', hostname], capture_output=True, text=True, timeout=3)
         if 'an alias for' in res.stdout:
             return res.stdout.split('an alias for')[-1].strip().rstrip('.')
-    except Exception:
+    except (FileNotFoundError, subprocess.SubprocessError, Exception):
         pass
+
     try:
         real_name, aliases, _ = socket.gethostbyname_ex(hostname)
         for alias in aliases:
@@ -114,6 +115,7 @@ def get_cname(hostname: str) -> str:
     except Exception:
         pass
     return None
+
 
 
 def analyze_subdomain(subdomain: str) -> dict:
