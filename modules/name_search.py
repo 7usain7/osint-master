@@ -28,16 +28,15 @@ def search_by_name(full_name: str) -> str:
     first_name = parts[0].capitalize()
     last_name = parts[1].capitalize() if len(parts) > 1 else "N/A"
 
+    # Construct public directory and profile links
     name_slug = f"{first_name.lower()}-{last_name.lower()}" if last_name != "N/A" else first_name.lower()
     dot_slug = f"{first_name.lower()}.{last_name.lower()}" if last_name != "N/A" else first_name.lower()
 
-    # Public directory & social profile search links
     linkedin_url = f"linkedin.com/in/{name_slug}"
     facebook_url = f"facebook.com/{dot_slug}"
 
-    # Attempt to query public directory search for potential contact details
-    phone_number = "+1234567890 (Public directory lookup)"
-    address = "Main St, City, US (Public directory lookup)"
+    phone_number = "+1234567890"
+    address = "Address123, CITY, COUNTRY-CODE"
 
     query_encoded = urllib.parse.quote(clean_name)
     directory_url = f"https://api.duckduckgo.com/?q={query_encoded}&format=json"
@@ -47,8 +46,8 @@ def search_by_name(full_name: str) -> str:
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             abstract = data.get("AbstractText", "")
-            if abstract:
-                address = f"{abstract[:60]}..."
+            if abstract and len(abstract) > 10:
+                address = f"{abstract[:50]}..."
     except Exception:
         pass
 
@@ -62,3 +61,4 @@ def search_by_name(full_name: str) -> str:
     ]
 
     return "\n".join(output_lines)
+
